@@ -1,9 +1,17 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
-import { createTrack, updateTrack } from "../storage/tracks.store.js";
+import {
+  createTrack,
+  updateTrack,
+  getTrack
+} from "../storage/tracks.store.js";
 
 const router = express.Router();
 
+/**
+ * POST /generate
+ * Cria uma nova música
+ */
 router.post("/", async (req, res) => {
   try {
     const { prompt, style, duration } = req.body;
@@ -30,10 +38,28 @@ router.post("/", async (req, res) => {
     }, 8000);
 
   } catch (error) {
-    console.error("Erro no /generate:", error);
+    console.error("Erro no POST /generate:", error);
+    res.status(500).json({ error: "Erro ao gerar música" });
   }
 });
 
+/**
+ * GET /generate/:trackId
+ * Consulta o status da música
+ */
+router.get("/:trackId", (req, res) => {
+  const { trackId } = req.params;
+
+  const track = getTrack(trackId);
+
+  if (!track) {
+    return res.status(404).json({ error: "Track not found" });
+  }
+
+  res.json(track);
+});
+
 export default router;
+
 
 

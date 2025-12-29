@@ -1,20 +1,16 @@
 const tracks = new Map();
 
-export function createTrack(trackId) {
-  tracks.set(trackId, {
-    status: "processing",
-    audioUrl: null,
-  });
+export function createTrack(id) {
+  tracks.set(id, { status: "processing" });
 }
 
-export function updateTrack(trackId, data) {
-  if (!tracks.has(trackId)) return;
-  tracks.set(trackId, {
-    ...tracks.get(trackId),
-    ...data,
-  });
+export function updateTrack(id, data) {
+  const track = tracks.get(id);
+  if (track) {
+    tracks.set(id, { ...track, ...data });
+  }
 }
 
-export function getTrack(trackId) {
-  return tracks.get(trackId);
+export function getTrack(id) {
+  return tracks.get(id);
 }
