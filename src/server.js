@@ -2,22 +2,22 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
-import cors from "cors"; // ✅ IMPORTANTE
+import cors from "cors";
+
 import generateRoutes from "./routes/generate.routes.js";
 
 const app = express();
 
-// ✅ CORS LIBERADO (ESSENCIAL PARA O LOVABLE)
-app.use(cors({
-  origin: "*"
-}));
+// ✅ CORS LIBERADO (resolve Failed to fetch no Lovable)
+app.use(cors());
 
+// ✅ Permite JSON no body
 app.use(express.json());
 
-// rotas
+// ✅ Rota principal
 app.use("/generate", generateRoutes);
 
-
+// ✅ Porta padrão Render
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
