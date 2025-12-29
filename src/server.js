@@ -15,7 +15,8 @@ app.use(cors({
 app.use(express.json());
 
 // rotas
-app.use(generateRoutes);
+app.use("/generate", generateRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 
