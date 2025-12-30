@@ -22,14 +22,14 @@ router.post("/", async (req, res) => {
     // cria a track como "processing"
     createTrack(trackId);
 
-    // responde imediatamente para o frontend
+    // responde imediatamente para o frontend (Lovable)
     res.json({
       status: "processing",
       trackId,
       estimatedTime: 10,
     });
 
-    // 🔥 SIMULA a geração da música (pipeline)
+    // simula a geração da música
     setTimeout(() => {
       updateTrack(trackId, {
         status: "completed",
@@ -45,7 +45,7 @@ router.post("/", async (req, res) => {
 
 /**
  * GET /generate/:trackId
- * Consulta o status da música
+ * Consulta o status da música (rota padrão)
  */
 router.get("/:trackId", (req, res) => {
   const { trackId } = req.params;
@@ -59,7 +59,20 @@ router.get("/:trackId", (req, res) => {
   res.json(track);
 });
 
+/**
+ * GET /generate/status/:trackId
+ * Compatibilidade com o frontend Lovable
+ */
+router.get("/status/:trackId", (req, res) => {
+  const { trackId } = req.params;
+
+  const track = getTrack(trackId);
+
+  if (!track) {
+    return res.status(404).json({ error: "Track not found" });
+  }
+
+  res.json(track);
+});
+
 export default router;
-
-
-
