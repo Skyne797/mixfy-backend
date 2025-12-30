@@ -5,19 +5,39 @@ import express from "express";
 import cors from "cors";
 
 import generateRoutes from "./routes/generate.routes.js";
+import { getTrack } from "./storage/tracks.store.js";
 
 const app = express();
 
-// ✅ CORS LIBERADO (resolve Failed to fetch no Lovable)
+// ✅ CORS (obrigatório para Lovable)
 app.use(cors());
 
-// ✅ Permite JSON no body
+// ✅ JSON body
 app.use(express.json());
 
-// ✅ Rota principal
+/**
+ * POST /generate
+ * GET  /generate/:trackId
+ */
 app.use("/generate", generateRoutes);
 
-// ✅ Porta padrão Render
+/**
+ * ✅ ROTA QUE O LOVABLE USA (ROOT)
+ * GET /status/:trackId
+ */
+app.get("/status/:trackId", (req, res) => {
+  const { trackId } = req.params;
+
+  const track = getTrack(trackId);
+
+  if (!track) {
+    return res.status(404).json({ error: "Track not found" });
+  }
+
+  res.json(track);
+});
+
+// ✅ Porta Render
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
