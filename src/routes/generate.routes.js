@@ -1,10 +1,6 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
-import {
-  createTrack,
-  updateTrack,
-  getTrack
-} from "../storage/tracks.store.js";
+import { supabase } from "../lib/supabase.js";
 
 const router = express.Router();
 
@@ -16,63 +12,87 @@ router.post("/", async (req, res) => {
   try {
     const { prompt, style, duration } = req.body;
 
-    // gera o ID único da música
     const trackId = `mixfy_${uuidv4()}`;
 
-    // cria a track como "processing"
-    createTrack(trackId);
+    // salva imediatamente no banco como "processing"
+    const { error: insertError } = await supabase
+      .from("tracks")
+      .insert([
+        {
+          id: trackId,
+          prompt,
+          style,
+          duration,
+          status: "processing",
+        },
+      ]);
 
-    // responde imediatamente para o frontend (Lovable)
+    if (insertError) {
+      console.error(insertError);
+      return res.status(500).json({ error: "Erro ao salvar música" });
+    }
+
+    // responde ao frontend
     res.json({
       status: "processing",
       trackId,
       estimatedTime: 10,
     });
 
-    // simula a geração da música
-    setTimeout(() => {
-      updateTrack(trackId, {
-        status: "completed",
-        audioUrl: "https://mixfy.fake/audio-demo.mp3",
-      });
+    // simula geração da música
+    setTimeout(async () => {
+      await supabase
+        .from("tracks")
+        .update({
+          status: "completed",
+          audio_url: "https://mixfy.fake/audio-demo.mp3",
+        })
+        .eq("id", trackId);
     }, 8000);
 
-  } catch (error) {
-    console.error("Erro no POST /generate:", error);
-    res.status(500).json({ error: "Erro ao gerar música" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro interno" });
   }
 });
 
 /**
  * GET /generate/:trackId
- * Consulta o status da música (rota padrão)
+ * Consulta status da música
  */
-router.get("/:trackId", (req, res) => {
+router.get("/:trackId", async (req, res) => {
   const { trackId } = req.params;
 
-  const track = getTrack(trackId);
+  const { data, error } = await supabase
+    .from("tracks")
+    .select("*")
+    .eq("id", trackId)
+    .single();
 
-  if (!track) {
+  if (error || !data) {
     return res.status(404).json({ error: "Track not found" });
   }
 
-  res.json(track);
+  res.json(data);
 });
 
 /**
- * GET /generate/status/:trackId
- * Compatibilidade com o frontend Lovable
+ * GET /generate
+ * Galeria de músicas
  */
-router.get("/status/:trackId", (req, res) => {
-  const { trackId } = req.params;
+router.get("/", async (req, res) => {
+  const { data, error } = await supabase
+    .from("tracks")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-  const track = getTrack(trackId);
-
-  if (!track) {
-    return res.status(404).json({ error: "Track not found" });
+  if (error) {
+    return res.status(500).json({ error: "Erro ao carregar galeria" });
   }
 
-  res.json(track);
+  res.json(data);
 });
 
 export default router;
+
+ 
