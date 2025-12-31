@@ -46,14 +46,15 @@ router.post("/", async (req, res) => {
       estimatedTime: 10, // segundos
     });
 
-    // 3️⃣ Simula geração da música (pipeline)
+    // 3️⃣ Processamento assíncrono da música
     setTimeout(async () => {
-      // Atualiza track quando a música estiver pronta
+      const audioUrl = "https://mixfy.fake/audio-demo.mp3"; // aqui coloque a URL real da música
+
       const { error: updateError } = await supabase
         .from("tracks")
         .update({
           status: "completed",
-          audio_url: "https://mixfy.fake/audio-demo.mp3", // aqui você coloca a URL real quando gerar
+          audio_url: audioUrl,
         })
         .eq("id", trackId);
 
@@ -62,7 +63,7 @@ router.post("/", async (req, res) => {
       } else {
         console.log(`Música ${trackId} atualizada com sucesso!`);
       }
-    }, 8000); // tempo de geração simulado
+    }, 12000); // simula tempo de geração da música
 
   } catch (error) {
     console.error("Erro no POST /generate:", error);
