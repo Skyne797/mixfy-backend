@@ -12,59 +12,37 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANO
 
 /**
  * POST /generate
- * Cria uma nova música
  */
 router.post("/", async (req, res) => {
   try {
     const { prompt, style, duration } = req.body;
-
-    // Gera ID único da música
     const trackId = `mixfy_${uuidv4()}`;
 
-    // 1️⃣ Registra imediatamente a track no Supabase com status "processing"
+    // 1️⃣ Registra imediatamente a track no Supabase
     const { error: insertError } = await supabase
       .from("tracks")
-      .insert([
-        {
-          id: trackId,
-          prompt,
-          style,
-          duration,
-          status: "processing",
-        },
-      ]);
+      .insert([{ id: trackId, prompt, style, duration, status: "processing" }]);
 
     if (insertError) {
-      console.error("Erro ao inserir track no Supabase:", insertError);
+      console.error("Erro ao inserir track:", insertError);
       return res.status(500).json({ error: "Erro ao registrar música" });
     }
 
-    // 2️⃣ Retorna imediatamente para o frontend / Lovable
-    res.json({
-      status: "processing",
-      trackId,
-      estimatedTime: 10, // segundos
-    });
+    // 2️⃣ Responde rápido para Lovable
+    res.json({ status: "processing", trackId, estimatedTime: 10 });
 
-    // 3️⃣ Processamento assíncrono da música
+    // 3️⃣ Processamento assíncrono
     setTimeout(async () => {
-      const audioUrl = "https://mixfy.fake/audio-demo.mp3"; // aqui coloque a URL real da música
+      const audioUrl = "https://mixfy.fake/audio-demo.mp3"; // Substitua pela URL real
 
       const { error: updateError } = await supabase
         .from("tracks")
-        .update({
-          status: "completed",
-          audio_url: audioUrl,
-        })
+        .update({ status: "completed", audio_url: audioUrl })
         .eq("id", trackId);
 
-      if (updateError) {
-        console.error("Erro ao atualizar track no Supabase:", updateError);
-      } else {
-        console.log(`Música ${trackId} atualizada com sucesso!`);
-      }
-    }, 12000); // simula tempo de geração da música
-
+      if (updateError) console.error("Erro ao atualizar track:", updateError);
+      else console.log(`Música ${trackId} concluída!`);
+    }, 15000); // tempo de geração simulado
   } catch (error) {
     console.error("Erro no POST /generate:", error);
     res.status(500).json({ error: "Erro ao gerar música" });
@@ -73,7 +51,6 @@ router.post("/", async (req, res) => {
 
 /**
  * GET /generate/:trackId
- * Consulta o status da música
  */
 router.get("/:trackId", async (req, res) => {
   try {
@@ -85,9 +62,7 @@ router.get("/:trackId", async (req, res) => {
       .eq("id", trackId)
       .single();
 
-    if (error || !track) {
-      return res.status(404).json({ error: "Track not found" });
-    }
+    if (error || !track) return res.status(404).json({ error: "Track not found" });
 
     res.json(track);
   } catch (error) {
@@ -97,3 +72,4 @@ router.get("/:trackId", async (req, res) => {
 });
 
 export default router;
+
