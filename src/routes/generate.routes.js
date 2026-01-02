@@ -1,19 +1,24 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
-import { createTrack, updateTrack } from "../storage/tracks.store.js";
-
+import {
+  createTrack,
+  updateTrack,
+  getTrack
+} from "../storage/tracks.store.js";
 
 const router = express.Router();
 
+/**
+ * POST /generate
+ */
 router.post("/", async (req, res) => {
   try {
     const { prompt, style, duration } = req.body;
 
     const trackId = `mixfy_${uuidv4()}`;
 
-    // 1️⃣ cria track imediatamente
-    await createTrack({
-      id: trackId,
+    // cria track imediatamente
+    createTrack(trackId, {
       status: "processing",
       prompt,
       style,
@@ -21,27 +26,20 @@ router.post("/", async (req, res) => {
       attempts: 0,
     });
 
-    // 2️⃣ responde IMEDIATO
+    // responde rápido (evita timeout)
     res.json({
       status: "processing",
       trackId,
       estimatedTime: 15,
     });
 
-    // 3️⃣ geração em background
-    generateMusic(trackId, { prompt, style, duration })
-      .then((audioUrl) => {
-        updateTrack(trackId, {
-          status: "completed",
-          audioUrl,
-        });
-      })
-      .catch((err) => {
-        updateTrack(trackId, {
-          status: "error",
-          error: err.message || "Erro ao gerar música",
-        });
+    // simula geração em background
+    setTimeout(() => {
+      updateTrack(trackId, {
+        status: "completed",
+        audioUrl: "https://link_do_audio.mp3",
       });
+    }, 5000);
 
   } catch (error) {
     console.error("Erro no /generate:", error);
@@ -51,4 +49,20 @@ router.post("/", async (req, res) => {
   }
 });
 
+/**
+ * GET /generate/status/:trackId
+ */
+router.get("/status/:trackId", (req, res) => {
+  const { trackId } = req.params;
+
+  const track = getTrack(trackId);
+
+  if (!track) {
+    return res.status(404).json({ error: "Track not found" });
+  }
+
+  res.json(track);
+});
+
 export default router;
+
