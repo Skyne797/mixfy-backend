@@ -43,7 +43,7 @@ router.post("/", async (req, res) => {
         });
       });
 
-  } catch (err) {
+  } catch (error) {
     console.error("Erro no /generate:", error);
     if (!res.headersSent) {
       res.status(500).json({ error: "Erro ao gerar musica" });
