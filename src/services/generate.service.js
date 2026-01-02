@@ -1,10 +1,10 @@
-export async function generateMusicService(enrichedPrompt, duration) {
-  console.log("🎶 Gerando música com prompt:", enrichedPrompt);
+export async function generateMusic(trackId, data) {
+  console.log("🎵 Gerando música:", trackId);
 
-  // 🔮 Aqui futuramente entra a IA de música
+  // simulação de tempo de geração
+  await new Promise((resolve) => setTimeout(resolve, 8000));
 
-  return {
-    audioUrl: null,
-    status: "processing",
-  };
+  return "https://link_do_audio.mp3";
 }
+
+
