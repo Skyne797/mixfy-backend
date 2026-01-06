@@ -1,25 +1,20 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
 import { createTrack, updateTrack } from "../storage/tracks.store.js";
-import { generateMusicGen } from "../services/musicgen.service.js";
+import { generateMusicWithVoice } from "../services/musicapi.service.js";
 
 const router = express.Router();
 
 /**
  * POST /generate
- * Cria uma música instrumental usando MusicGen (Replicate)
  */
 router.post("/", async (req, res) => {
   try {
-    const { prompt, style, duration = 15 } = req.body;
-
-    if (!prompt) {
-      return res.status(400).json({ error: "Prompt é obrigatório" });
-    }
+    const { prompt, style, duration } = req.body;
 
     const trackId = `mixfy_${uuidv4()}`;
 
-    // 1️⃣ cria a track imediatamente (fila)
+    // 1️⃣ cria imediatamente no banco
     await createTrack({
       id: trackId,
       status: "processing",
@@ -29,39 +24,37 @@ router.post("/", async (req, res) => {
       attempts: 0,
     });
 
-    // 2️⃣ responde IMEDIATAMENTE ao frontend
+    // 2️⃣ responde IMEDIATO (sem timeout)
     res.json({
       status: "processing",
       trackId,
       estimatedTime: 20,
     });
 
-    // 3️⃣ geração REAL em background (MusicGen)
-    generateMusicGen(prompt, duration)
+    // 3️⃣ geração real em background
+    generateMusicWithVoice({
+      prompt,
+      style,
+      duration,
+    })
       .then((audioUrl) => {
-        if (!audioUrl) {
-          throw new Error("MusicGen não retornou áudio");
-        }
-
         updateTrack(trackId, {
           status: "completed",
           audioUrl,
         });
       })
       .catch((err) => {
-        console.error("❌ Erro MusicGen:", err);
-
+        console.error("Erro MusicAPI:", err);
         updateTrack(trackId, {
           status: "error",
-          error: err.message || "Erro ao gerar música",
+          error: err.message,
         });
       });
 
   } catch (error) {
-    console.error("❌ Erro no /generate:", error);
-
+    console.error("Erro no /generate:", error);
     if (!res.headersSent) {
-      res.status(500).json({ error: "Erro interno ao gerar música" });
+      res.status(500).json({ error: "Erro ao gerar música" });
     }
   }
 });
