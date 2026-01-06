@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 export async function generateMusicWithVoice({
   prompt,
   duration = 15,
@@ -8,7 +6,7 @@ export async function generateMusicWithVoice({
   const response = await fetch("https://api.musicapi.ai/v1/music", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${process.env.MUSIC_API_KEY}`,
+      Authorization: `Bearer ${process.env.MUSIC_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -27,6 +25,8 @@ export async function generateMusicWithVoice({
 
   const data = await response.json();
 
-  // retorno esperado: url do áudio
   return data.audioUrl;
 }
+
+
+
