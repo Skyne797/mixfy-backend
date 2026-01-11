@@ -43,3 +43,4 @@ export function getTrackById(id) {
 export function getAllTracks() {
   return Array.from(tracks.values());
 }
+export const getTrack = getTrackById;
