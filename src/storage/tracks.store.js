@@ -1,7 +1,6 @@
 /**
  * Storage em memória (Map)
  * MVP simples e rápido
- * Pode ser trocado futuramente por Redis / DB sem quebrar rotas
  */
 
 const tracks = new Map();
@@ -9,10 +8,8 @@ const tracks = new Map();
 /**
  * Cria uma nova track
  */
-export function createTrack(id, data = {}) {
-  tracks.set(id, {
-    id,
-    status: "processing",
+export function createTrack(data) {
+  tracks.set(data.id, {
     createdAt: Date.now(),
     ...data,
   });
@@ -36,27 +33,13 @@ export function updateTrack(id, data = {}) {
 /**
  * Retorna uma track pelo ID
  */
-export function getTrack(id) {
+export function getTrackById(id) {
   return tracks.get(id) || null;
 }
 
 /**
- * Retorna todas as tracks (debug / admin)
+ * Debug
  */
 export function getAllTracks() {
   return Array.from(tracks.values());
-}
-
-/**
- * Remove uma track (opcional)
- */
-export function deleteTrack(id) {
-  return tracks.delete(id);
-}
-
-/**
- * Limpa tudo (dev only)
- */
-export function clearTracks() {
-  tracks.clear();
 }

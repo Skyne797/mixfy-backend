@@ -1,6 +1,10 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
-import { createTrack, updateTrack } from "../storage/tracks.store.js";
+import {
+  createTrack,
+  updateTrack,
+  getTrackById,
+} from "../storage/tracks.store.js";
 import { generateMusicWithVoice } from "../services/musicapi.service.js";
 
 const router = express.Router();
@@ -14,7 +18,7 @@ router.post("/", async (req, res) => {
 
     const trackId = `mixfy_${uuidv4()}`;
 
-    // 1️⃣ cria imediatamente no banco
+    // 1️⃣ cria imediatamente
     await createTrack({
       id: trackId,
       status: "processing",
@@ -24,19 +28,15 @@ router.post("/", async (req, res) => {
       attempts: 0,
     });
 
-    // 2️⃣ responde IMEDIATO (sem timeout)
+    // 2️⃣ responde rápido
     res.json({
       status: "processing",
       trackId,
       estimatedTime: 20,
     });
 
-    // 3️⃣ geração real em background
-    generateMusicWithVoice({
-      prompt,
-      style,
-      duration,
-    })
+    // 3️⃣ geração em background
+    generateMusicWithVoice({ prompt, style, duration })
       .then((audioUrl) => {
         updateTrack(trackId, {
           status: "completed",
@@ -44,7 +44,6 @@ router.post("/", async (req, res) => {
         });
       })
       .catch((err) => {
-        console.error("Erro MusicAPI:", err);
         updateTrack(trackId, {
           status: "error",
           error: err.message,
@@ -59,5 +58,19 @@ router.post("/", async (req, res) => {
   }
 });
 
-export default router;
+/**
+ * GET /generate/status/:id
+ */
+router.get("/status/:id", async (req, res) => {
+  const { id } = req.params;
 
+  const track = await getTrackById(id);
+
+  if (!track) {
+    return res.status(404).json({ error: "Track not found" });
+  }
+
+  res.json(track);
+});
+
+export default router;
