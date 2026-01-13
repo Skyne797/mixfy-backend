@@ -28,8 +28,16 @@ export async function generateMusicWithVoice({
     throw new Error(`MusicAPI error: ${error}`);
   }
 
-  const data = await response.json();
-  console.log("🎵 RESPOSTA MUSIC API:", data);
+ const raw = await response.text();
+console.log("🔴 RESPOSTA CRUA DA API:", raw);
+
+let data;
+try {
+  data = JSON.parse(raw);
+} catch {
+  throw new Error("A API não retornou JSON. Veio texto ou HTML.");
+}
+
 
   // 🔹 Caso 1: veio direto
   if (data.audioUrl) return data.audioUrl;
