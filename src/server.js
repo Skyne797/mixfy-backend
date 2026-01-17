@@ -1,25 +1,24 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import express from "express";
-import cors from "cors";
 import generateRoutes from "./routes/generate.routes.js";
 
 const app = express();
 
-// Middlewares
-app.use(cors());
+// Middleware
 app.use(express.json());
 
-// 🔹 Pasta pública para áudios
+// Servir arquivos públicos (áudios)
 app.use("/public", express.static("public"));
 
-// 🔹 Rotas principais
+// Rotas principais
 app.use("/generate", generateRoutes);
 
-// Porta
-const PORT = process.env.PORT || 3000;
+// Rota de teste
+app.get("/", (req, res) => {
+  res.send("Mixfy backend online");
+});
 
+// Porta (Render usa process.env.PORT)
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🔥 Mixfy backend rodando na porta ${PORT}`);
+  console.log("Servidor rodando na porta", PORT);
 });
