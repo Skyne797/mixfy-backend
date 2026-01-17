@@ -3,41 +3,21 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-
 import generateRoutes from "./routes/generate.routes.js";
-import { getTrack } from "./storage/tracks.store.js";
 
 const app = express();
 
-// ✅ CORS (obrigatório para Lovable)
+// Middlewares
 app.use(cors());
-
-// ✅ JSON body
 app.use(express.json());
 
-/**
- * POST /generate
- * GET  /generate/:trackId
- */
+// 🔹 Pasta pública para áudios
+app.use("/public", express.static("public"));
+
+// 🔹 Rotas principais
 app.use("/generate", generateRoutes);
 
-/**
- * ✅ ROTA QUE O LOVABLE USA (ROOT)
- * GET /status/:trackId
- */
-app.get("/status/:trackId", (req, res) => {
-  const { trackId } = req.params;
-
-  const track = getTrack(trackId);
-
-  if (!track) {
-    return res.status(404).json({ error: "Track not found" });
-  }
-
-  res.json(track);
-});
-
-// ✅ Porta Render
+// Porta
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
