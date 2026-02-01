@@ -1,6 +1,8 @@
-export async function generateVoice({ text, voice = "Rachel" }) {
+export async function generateVoice({ text }) {
+  const VOICE_ID = "bIHbv24MWmeRgasZH58o"; // 🔥 voice_id REAL como string
+
   const res = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${bIHbv24MWmeRgasZH58o}`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
     {
       method: "POST",
       headers: {
@@ -26,3 +28,6 @@ export async function generateVoice({ text, voice = "Rachel" }) {
   const buffer = await res.arrayBuffer();
   return Buffer.from(buffer);
 }
+
+
+ 
