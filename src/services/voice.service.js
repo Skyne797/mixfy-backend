@@ -1,6 +1,6 @@
 export async function generateVoice({ text, voice = "Rachel" }) {
   const res = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voice}`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${bIHbv24MWmeRgasZH58o}`,
     {
       method: "POST",
       headers: {
