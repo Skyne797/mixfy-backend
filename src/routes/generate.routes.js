@@ -13,7 +13,7 @@ router.post("/", async (req, res) => {
     const { prompt, style, duration } = req.body;
     const trackId = `mixfy_${uuidv4()}`;
 
-    // cria track local
+    // 1️⃣ cria track local
     createTrack(trackId, {
       status: "processing",
       prompt,
@@ -22,16 +22,23 @@ router.post("/", async (req, res) => {
       attempts: 0,
     });
 
-    // chama Mureka
-    const { trackId: murekaTrackId, estimatedTime } =
-      await generateFullMusic({ prompt, style, duration });
-
-    // salva relação local ↔ mureka
-    updateTrack(trackId, {
-      murekaTrackId,
+    // 2️⃣ cria job na Mureka
+    const { murekaJobId, estimatedTime } = await generateFullMusic({
+      prompt,
+      style,
+      duration,
     });
 
-    // responde imediatamente
+    if (!murekaJobId) {
+      throw new Error("Falha ao criar job na Mureka");
+    }
+
+    // 3️⃣ salva relação local ↔ mureka
+    updateTrack(trackId, {
+      murekaJobId,
+    });
+
+    // 4️⃣ responde imediatamente
     res.json({
       status: "processing",
       trackId,
@@ -52,13 +59,23 @@ router.get("/status/:id", async (req, res) => {
   }
 
   try {
-    // consulta Mureka
-    const result = await getFullMusicStatus(track.murekaTrackId);
+    // 5️⃣ consulta status na Mureka
+    const result = await getFullMusicStatus(track.murekaJobId);
 
+    if (!result || !result.status) {
+      throw new Error("Resposta inválida da Mureka");
+    }
+
+    // 6️⃣ atualiza conforme status
     if (result.status === "completed") {
       updateTrack(req.params.id, {
         status: "completed",
         audioUrl: result.audioUrl,
+      });
+    } else if (result.status === "error") {
+      updateTrack(req.params.id, {
+        status: "error",
+        error: result.error || "Erro na Mureka",
       });
     }
 
