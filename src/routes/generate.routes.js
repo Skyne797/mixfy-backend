@@ -9,8 +9,17 @@ import {
 const router = express.Router();
 
 router.post("/", async (req, res) => {
+  console.log("➡️ POST /generate recebido");
+  console.log("📦 BODY:", req.body);
+
   try {
     const { prompt, style, duration } = req.body;
+
+    if (!prompt || !style) {
+      console.log("❌ Prompt ou style ausente");
+      return res.status(400).json({ error: "Prompt e style são obrigatórios" });
+    }
+
     const trackId = `mixfy_${uuidv4()}`;
 
     // 1️⃣ cria track local
@@ -22,12 +31,18 @@ router.post("/", async (req, res) => {
       attempts: 0,
     });
 
+    console.log("🆔 Track criada:", trackId);
+
     // 2️⃣ cria job na Mureka
-    const { murekaJobId, estimatedTime } = await generateFullMusic({
+    const result = await generateFullMusic({
       prompt,
       style,
       duration,
     });
+
+    console.log("🎵 Resposta generateFullMusic:", result);
+
+    const { murekaJobId, estimatedTime } = result;
 
     if (!murekaJobId) {
       throw new Error("Falha ao criar job na Mureka");
@@ -38,35 +53,47 @@ router.post("/", async (req, res) => {
       murekaJobId,
     });
 
+    console.log("🔗 MurekaJobId salvo:", murekaJobId);
+
     // 4️⃣ responde imediatamente
     res.json({
       status: "processing",
       trackId,
       estimatedTime: estimatedTime ?? 20,
     });
+
   } catch (e) {
-    res.status(500).json({ error: "Erro ao gerar música" });
+    console.error("🔥 ERRO REAL NO /generate:", e);
+
+    res.status(500).json({
+      error: "Erro ao gerar música",
+      detail: e.message,
+    });
   }
 });
 
 router.get("/status/:id", async (req, res) => {
-  const track = getTrack(req.params.id);
-  if (!track) return res.status(404).json({ error: "Track not found" });
+  console.log("➡️ GET /generate/status recebido:", req.params.id);
 
-  // se já finalizou, devolve direto
+  const track = getTrack(req.params.id);
+  if (!track) {
+    console.log("❌ Track não encontrada");
+    return res.status(404).json({ error: "Track not found" });
+  }
+
   if (track.status === "completed" || track.status === "error") {
     return res.json(track);
   }
 
   try {
-    // 5️⃣ consulta status na Mureka
     const result = await getFullMusicStatus(track.murekaJobId);
+
+    console.log("🔎 Status da Mureka:", result);
 
     if (!result || !result.status) {
       throw new Error("Resposta inválida da Mureka");
     }
 
-    // 6️⃣ atualiza conforme status
     if (result.status === "completed") {
       updateTrack(req.params.id, {
         status: "completed",
@@ -81,6 +108,8 @@ router.get("/status/:id", async (req, res) => {
 
     res.json(getTrack(req.params.id));
   } catch (err) {
+    console.error("🔥 ERRO NO /status:", err);
+
     updateTrack(req.params.id, {
       status: "error",
       error: err.message,
